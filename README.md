@@ -9,6 +9,8 @@ and
 Michael Hay, Gerome Miklau, David Jensen, Don Towsley, and Philipp Weis. [Resisting Structural Re-identification in Anonymized Social Networks](http://www.vldb.org/pvldb/1/1453873.pdf)
 VLDB 2008.
 
+**THIS CODE IS AN ADAPTATION OF THE CODE FOUND HERE: https://github.com/michaelghay/graph-gen MADE BY MICHAEL HAY**
+we just adapted the code for SNACS course at Leiden University and updated the libraries to work as of Dec 2022
 
 ## Installation
 
