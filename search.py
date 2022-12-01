@@ -42,29 +42,29 @@ def annealing(problem, pickle_filename=None, working_dir=None):
 			argmax_score = problem.copy_state()
 			max_score = score
 			if 0-score < 0.0000001:
-				print "Found state with score=%g, exiting" % (round(score, 3))
+				print("Found state with score=%g, exiting" % (round(score, 3)))
 				return argmax_score
 	
 		if t % checkpoint_cycle == 0:
 			state = problem.copy_state()
 			filename_state = working_dir + '/%s.%d.i.%d.partition' % (state.g.name, problem.k, t)
-			print "checkpoint: saving state to filename=%s" % filename_state
+			print("checkpoint: saving state to filename=%s" % filename_state)
 			intermediate_partition = []
 			for gid in state.get_partitions():
 				intermediate_partition.append(state.get_nodes(gid))
 			p = partition.Partition(groups=intermediate_partition)
 			p.save(filename_state)
-	
-			if max_score > max_saved_score:
-				state = argmax_score
-				filename_best = working_dir + '/%s.%d.b.partition' % (state.g.name, problem.k)
-				print "checkpoint: saving best (with score=%g) to filename=%s" % (max_score, filename_best)
-				intermediate_partition = []
-				for gid in state.get_partitions():
-					intermediate_partition.append(state.get_nodes(gid))
-				p = partition.Partition(groups=intermediate_partition)
-				p.save(filename_best)
-				max_saved_score = max_score
+			if max_saved_score is not None and max_score is not None:
+				if max_score > max_saved_score:
+					state = argmax_score
+					filename_best = working_dir + '/%s.%d.b.partition' % (state.g.name, problem.k)
+					print("checkpoint: saving best (with score=%g) to filename=%s" % (max_score, filename_best))
+					intermediate_partition = []
+					for gid in state.get_partitions():
+						intermediate_partition.append(state.get_nodes(gid))
+					p = partition.Partition(groups=intermediate_partition)
+					p.save(filename_best)
+					max_saved_score = max_score
 			
 			
 		if t % logging_cycle == 0:
@@ -85,11 +85,11 @@ def annealing(problem, pickle_filename=None, working_dir=None):
 				s2 = "nbr_merge=%g nbr_nbr_merge=%g nonnbr_merge=%g" % (0,0,0)
 			
 			assert t == 0 or (uphill + downhill + stationery) == logging_cycle, "Some moves unnaccounted!"
-			print "steps=%d n=%d k=%d avg_size=%g uphill=%g downhill=%g stationery=%g %s %s ll=%g" % \
+			print("steps=%d n=%d k=%d avg_size=%g uphill=%g downhill=%g stationery=%g %s %s ll=%g" % \
 			(t, problem.n, problem.k, round(avg_size,2), 1.*uphill/logging_cycle,  \
 			1.*downhill/logging_cycle, \
 			1.*stationery/logging_cycle, \
-			s, s2, score)
+			s, s2, score))
 			uphill = downhill = stationery = 0
 				
 				

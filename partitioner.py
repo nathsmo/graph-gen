@@ -20,6 +20,7 @@ import random
 import partition
 import search
 import utils_lite as utils
+from functools import reduce
 
 class Partitioner(object):
 
@@ -185,7 +186,7 @@ class State(object):
 		self.partition_graph.add_node(i)
 
 	def __remove_edges(self, i):
-		self.partition_graph.remove_edges_from(self.partition_graph.edges(i))
+		self.partition_graph.remove_edges_from(list(self.partition_graph.edges(i)))
 
 	def __delete_node(self, i):
 		self.partition_graph.delete_node(i)
@@ -369,6 +370,7 @@ class State(object):
 		assert assigned_partitions == set(self.partition.keys())
 
 		# check that the set of nodes in partitioning is exactly V
+		print('PARTITION VALUES: ', self.partition.values())
 		tmp = reduce(lambda x,y: x+y, self.partition.values())
 		nodes = set(tmp)
 		assert len(tmp) == len(nodes)
@@ -412,7 +414,7 @@ class State(object):
 
 
 	def choose_random_node(self):
-		return random.choice(self.nodes.keys())
+		return random.choice(list(self.nodes.keys()))
 
 	def copy(self):
 		return State(self.g, partition=self.partition.values())
@@ -462,7 +464,14 @@ class State(object):
 		# edge_count = count
 
 		j = set(j)
-		neighbors = reduce(lambda x,y: x + y, map(self.adj_list.get, i))
+
+		try:
+			neighbors = reduce(lambda x,y: x + y, map(self.adj_list.get, i))
+		except:
+			print('ADJ --- LIST : ', self.adj_list, '-----')
+			neighbors = reduce(lambda x,y: x + y, map(self.adj_list), i)
+			
+			
 		edge_count = reduce(lambda total, nbr: total + (nbr in j), neighbors, 0)
 
 		if self_loop:
@@ -496,7 +505,9 @@ class State(object):
 	def initialize(self):
 		self.adj_list = {}
 		for u in self.g:
-			self.adj_list[u] = self.g.neighbors(u)[:]
+			self.adj_list[u] = [n for n in self.g.neighbors(u)]
+			#it = iter(self.adj_list[u])
+			#self.adj_list[u] = dict(zip(it, it))
 
 		self.partition_graph = networkx.MultiGraph()
 		# for i in self.partition:
@@ -535,8 +546,12 @@ class State(object):
 			return nbrs
 		else:
 			assert type(i) == type(0) or type(i) == type('s')
-			nbrs = self.partition_graph.neighbors(i)
+			#print("NEIGH 1", [n for n in self.partition_graph.neighbors(i)])
+			nbrs = list(self.partition_graph.neighbors(i))
+			#print("NEIGH 2", nbrs)
+			#nbrs = [n for n in self.g.neighbors(u)]
 			if i in nbrs:
+				#print("NEIGH", nbrs)
 				nbrs.remove(i)
 			return nbrs
 
@@ -733,7 +748,7 @@ class Problem(object):
 			for i in self.state.neighbors(split_idx):
 				nodes_i = self.state.get_nodes(i)
 				edges_ij = self.state.edge_count(sub_partition, nodes_i)
-				ll_change += self.__likelihood_partition_pair(edges_ij, len(sub_partition), len(nodes_i))	
+				ll_change += self.__likelihood_partition_pair(edges_ij, len(sub_partition), len(nodes_i))
 				assert str(ll_change) != "nan"
 		return ll_change
 
@@ -883,7 +898,10 @@ class Problem(object):
 					tmp_edges_11 = edges_11 - edges_node_1 
 					tmp_edges_12 = edges_12 - edges_node_2 + edges_node_1
 					tmp_edges_22 = edges_22 + edges_node_2
-
+					if tmp_edges_12 < 0 :
+						print('EDGES - 12:', edges_12, ' 2 : ', edges_node_2, ' 1 : ', edges_node_1, 'TEMP EDGES ', tmp_edges_12)
+						tmp_edges_12 = 1
+					#print('passed 908 this should be it')
 					ll += self.__likelihood_partition_pair(tmp_edges_12, len(g1)-1, len(g2)+1)
 					ll += self.__likelihood_partition_pair(tmp_edges_11, len(g1)-1)
 					ll += self.__likelihood_partition_pair(tmp_edges_22, len(g2)+1)
@@ -900,11 +918,13 @@ class Problem(object):
 						ll += self.__likelihood_partition_pair(edges_1k, len(g1)-1, nodes_k)
 						ll += self.__likelihood_partition_pair(edges_2k, len(g2)+1, nodes_k)
 
-					if ll > max:
+					if max is None or ll > max:
 						max = ll
 						argmax = node
+			if argmax is None:
+				print('argmax', argmax)
+			assert argmax is not None
 
-			assert argmax != None
 			edges_node_1 = self.state.edge_count([argmax], g1)
 			edges_node_2 = self.state.edge_count([argmax], g2)
 			edges_11 = edges_11 - edges_node_1 
@@ -917,7 +937,13 @@ class Problem(object):
 				g1_edges[k] = g1_edges[k] - edges_node_k
 				g2_edges[k] = g2_edges[k] + edges_node_k
 				assert g1_edges[k] >= 0 and g2_edges[k] >= 0 
+
+			#keys = list(graph)
+			#keys.remove('a')
+			#print('g1: ', g1)
+			#print('argmax: ', argmax)
 			g1.remove(argmax)
+			#g1.remove(argmax)
 			g2.append(argmax)
 
 		s_g1 = set(g1)
@@ -984,7 +1010,7 @@ class Problem(object):
 
 		if debug_sampling:
 			#import pdb
-			print "Checking sampled graph"
+			print("Checking sampled graph")
 			for i in self.state.partition:
 				nodes_i = self.state.get_nodes(i)
 				assert self.state.edge_count(i) == len(networkx.subgraph(g2, nodes_i).edges())
@@ -1063,7 +1089,7 @@ class Problem(object):
 			conn_comps = networkx.connected_components(g2)
 			conn_trials += 1
 			if conn_trials > 50:
-				print "After %d tries, could not connect graph, leaving %d components" % (conn_trials, len(conn_comps))
+				print("After %d tries, could not connect graph, leaving %d components" % (conn_trials, len(conn_comps)))
 				break
 
 
@@ -1176,6 +1202,10 @@ class Problem(object):
 
 					ll += self.__likelihood_partition_pair(tmp_edges_11, len(g1)-1)
 					ll += self.__likelihood_partition_pair(tmp_edges_22, len(g2)+1)
+					#print('passed 1214')
+					#print('tmp_edges_12 amount: ', tmp_edges_12)
+					if tmp_edges_12 < 0:
+						print('tmp_edges_12 amount: ', tmp_edges_12)
 					ll += self.__likelihood_partition_pair(tmp_edges_12, len(g1)-1, len(g2)+1)
 
 					# compute change in edge counts and score if we move node to g2
@@ -1190,7 +1220,7 @@ class Problem(object):
 						ll += self.__likelihood_partition_pair(edges_1j, len(g1)-1, nodes_j)
 						ll += self.__likelihood_partition_pair(edges_2j, len(g2)+1, nodes_j)
 
-					if ll > max:
+					if max is None or ll > max:
 						max = ll
 						argmax = node
 
@@ -1244,6 +1274,7 @@ class Problem(object):
 		if do_merge:
 			successors += self.merge_partition(i)
 		if do_merge_split:
+			#print('1287 this should be the function')
 			successors += self.merge_and_split_partition(i)
 		if do_split:
 			successors += self.split_partition(i)	
@@ -1253,14 +1284,14 @@ class Problem(object):
 	def temperature(self, time):
 		if time > 0 and time % self.cycle_length == 0:
 			if self.num_changes < self.min_changes_per_cycle:
-				print "Only", self.num_changes, "changes in the last", self.cycle_length, "steps, exiting early."
+				print("Only", self.num_changes, "changes in the last", self.cycle_length, "steps, exiting early.")
 				return 0
 			else:
 				self.num_changes = 0  # reset flip count
 		if time < self.max_steps:
 			return self.start_temp * pow(self.alpha, time)
 		else:
-			print "Reached max number of steps", self.max_steps
+			print("Reached max number of steps", self.max_steps)
 			return 0
 
 

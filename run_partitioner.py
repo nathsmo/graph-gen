@@ -59,7 +59,7 @@ for u in nodes:
 		if rand_val <= 0.002 or (rand_val <= 0.5 and u_grp_id == v_grp_id):
 			input_graph.add_edge(u, v)
 input_graph.name = "test_graph"
-print "Created input graph"
+print("Created input graph")
 
 
 # RUN PARTITIONING ALGORITHM
@@ -68,22 +68,22 @@ print "Created input graph"
 partitioner = partitioner.MinNumWorldsPartitioner(g=input_graph, k=group_size, working_dir=tmp_dir, max_steps=5000)
 p = partitioner.partition()
 
-print "Printing the node partition"
+print("Printing the node partition")
 grp_cnt = 1
 for grp in p:
-	print "Group #%d, Members:" % grp_cnt,
-	print p.get_members(grp)
+	print("Group #%d, Members:" % grp_cnt,)
+	print(p.get_members(grp))
 	grp_cnt += 1
 
 # SAMPLE SIMPLE GRAPH FROM GENERALIZED GRAPH
 gen_graph = generalized_graph.GeneralizedGraph(input_graph, p, alg="Hay et al. 2008", k=group_size)
-print "Created generalized graph"
+print("Created generalized graph")
 
 sampled_graph = gen_graph.sample_graph()
-print "Sampled a simple graph from generalized graph"
-print "Input graph has %d nodes and %d edges" % (input_graph.number_of_nodes(), input_graph.number_of_edges())
-print "Sampled graph has %d nodes and %d edges" % (sampled_graph.number_of_nodes(), sampled_graph.number_of_edges())
+print("Sampled a simple graph from generalized graph")
+print("Input graph has %d nodes and %d edges" % (input_graph.number_of_nodes(), input_graph.number_of_edges()))
+print("Sampled graph has %d nodes and %d edges" % (sampled_graph.number_of_nodes(), sampled_graph.number_of_edges()))
 
 orig_clustering = networkx.average_clustering(input_graph)
 clustering = networkx.average_clustering(sampled_graph)
-print "Input graph had clustering coefficient of %0.2g\nSampled graph has clustering of %0.2g" % (orig_clustering, clustering)
+print("Input graph had clustering coefficient of %0.2g\nSampled graph has clustering of %0.2g" % (orig_clustering, clustering))

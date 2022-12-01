@@ -7,10 +7,11 @@ def get_max(items):
 	max = None
 	argmax = None
 	for i in range(len(items)):
-		if items[i] > max:
-			argmax = i
-			max = items[i]
-	assert argmax != None
+		if items is not None:
+			if max is None or items[i] > max:
+				argmax = i
+				max = items[i]
+	assert argmax is not None
 	return argmax
 
 def normalize(unnormalized):
@@ -40,7 +41,7 @@ def structural_equivalence(g):
 	sig_to_nodes = {}
 	for u in g:
 		nbrs = g.neighbors(u)
-		nbrs.sort()
+		sorted(nbrs)
 		sig = str(nbrs)
 		sig_to_nodes[sig] = sig_to_nodes.get(sig, []) + [u]
 	return sig_to_nodes.values()
